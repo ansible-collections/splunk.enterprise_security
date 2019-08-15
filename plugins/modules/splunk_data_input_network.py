@@ -113,7 +113,8 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import Request
 from ansible.module_utils.six.moves.urllib.parse import urlencode, quote_plus
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.splunk import SplunkRequest, parse_splunk_args
+from ansible_collections.splunk.enterprise_security.plugins.module_utils.splunk \
+    import SplunkRequest, parse_splunk_args
 
 import copy
 
