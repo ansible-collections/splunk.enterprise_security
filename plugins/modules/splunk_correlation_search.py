@@ -33,9 +33,9 @@ options:
     type: str
   state:
     description:
-      - Add or remove a data source.
+      - Add, remove, enable, or disiable a correlation search.
     required: true
-    choices: [ "present", "absent" ]
+    choices: [ "present", "absent", "enabled", "disabled" ]
   search:
     description:
       - SPL search string
@@ -180,7 +180,7 @@ def main():
     argspec = dict(
         name=dict(required=True, type='str'),
         description=dict(required=True, type='str'),
-        state=dict(choices=['present', 'absent'], required=True),
+        state=dict(choices=['present', 'absent', 'enabled', 'disabled'], required=True),
         search=dict(required=True, type='str'),
         app=dict(type="str", required=False, default="SplunkEnterpriseSecuritySuite"),
         ui_dispatch_context=dict(type="str", required=False),
@@ -204,7 +204,10 @@ def main():
         argument_spec=argspec,
         supports_check_mode=True
     )
-
+    if module['state'] in ['present', 'enabled']:
+        module_disabled_state = False
+    else:
+        module_disabled_state = True
     splunk_request = SplunkRequest(
         module,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
@@ -249,8 +252,9 @@ def main():
     request_post_data['alert_comparator'] = module.params['trigger_alert_when_condition']
     request_post_data['alert_threshold'] = module.params['trigger_alert_when_value']
     request_post_data['alert.suppress'] = module.params['suppress_alert']
+    request_post_data['disabled'] = module_disabled_state
 
-    if module.params['state'] == 'present':
+    if module.params['state'] in ['present', 'enabled', 'disabled']:
         if query_dict:
             needs_change = False
             for arg in request_post_data:
@@ -274,7 +278,7 @@ def main():
             splunk_data = splunk_request.create_update('servicesNS/nobody/SplunkEnterpriseSecuritySuite/saved/searches', data=urlencode(request_post_data))
             module.exit_json(changed=True, msg="{0} created.", splunk_data=splunk_data)
 
-    if module.params['state'] == 'absent':
+    elif module.params['state'] == 'absent':
         if query_dict:
             splunk_data = splunk_request.delete_by_path('services/saved/searches/{0}'.format(quote_plus(module.params['name'])))
             module.exit_json(changed=True, msg="Deleted {0}.".format(module.params['name']), splunk_data=splunk_data)
