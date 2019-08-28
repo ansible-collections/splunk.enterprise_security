@@ -17,6 +17,7 @@ version_added: "2.8"
 """
 
 import json
+import sys
 
 from ansible.module_utils.basic import to_text
 from ansible.errors import AnsibleConnectionFailure
@@ -34,12 +35,15 @@ class HttpApi(HttpApiBase):
         #payload = json.dumps(payload) if payload else '{}'
 
         try:
-            self._display_request(request_method)
+            self._display_request(request_method, path)
             response, response_data = self.connection.send(path, payload, method=request_method, headers=BASE_HEADERS, force_basic_auth=True)
             value = self._get_response_value(response_data)
 
             return response.getcode(), self._response_to_json(value)
         except AnsibleConnectionFailure as e:
+            self.connection.queue_message('vvv', 'AnsibleConnectionFailure: %s' % e)
+            if to_text('Could not connect to') in to_text(e):
+                raise
             if to_text('401') in to_text(e):
                 return 401, 'Authentication failure'
             else:
@@ -48,8 +52,8 @@ class HttpApi(HttpApiBase):
             error = json.loads(e.read())
             return e.code, error
 
-    def _display_request(self, request_method):
-        self.connection.queue_message('vvvv', 'Web Services: %s %s' % (request_method, self.connection._url))
+    def _display_request(self, request_method, path):
+        self.connection.queue_message('vvvv', 'Web Services: %s %s/%s' % (request_method, self.connection._url, path))
 
     def _get_response_value(self, response_data):
         return to_text(response_data.getvalue())
