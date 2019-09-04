@@ -5,15 +5,18 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: splunk_data_input_monitor
 short_description: Manage Splunk Data Inputs of type Monitor
@@ -110,10 +113,10 @@ options:
     type: str
 
 author: "Ansible Security Automation Team (https://github.com/ansible-security)
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
@@ -121,93 +124,117 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import Request
 from ansible.module_utils.six.moves.urllib.parse import urlencode, quote_plus
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible_collections.splunk.enterprise_security.plugins.module_utils.splunk \
-    import SplunkRequest, parse_splunk_args
+from ansible_collections.splunk.enterprise_security.plugins.module_utils.splunk import (
+    SplunkRequest,
+    parse_splunk_args,
+)
 
 import copy
+
 
 def main():
 
     argspec = dict(
-        name=dict(required=True, type='str'),
-        state=dict(choices=['present', 'absent'], required=True),
-        blacklist=dict(required=False, type='str', default=None),
-        check_indexed=dict(required=False, type='bool', default=None),
-        check_path=dict(required=False, type='bool', default=None),
-        crc_salt=dict(required=False, type='str', default=None),
-        disabled=dict(required=False, type='str', default=None),
-        followTail=dict(required=False, type='str', default=None),
-        host=dict(required=False, type='str', default=None),
-        host_segment=dict(required=False, type='int', default=None),
-        host_regex=dict(required=False, type='int', default=None),
-        ignore_older_than=dict(required=False, type='str', default=None),
-        index=dict(required=False, type='str', default=None),
-        recursive=dict(required=False, type='str', default=None),
-        rename_source=dict(required=False, type='str', default=None),
-        sourcetype=dict(required=False, type='str', default=None),
-        time_before_close=dict(required=False, type='int', default=None),
-        whitelist=dict(required=False, type='str', default=None),
+        name=dict(required=True, type="str"),
+        state=dict(choices=["present", "absent"], required=True),
+        blacklist=dict(required=False, type="str", default=None),
+        check_indexed=dict(required=False, type="bool", default=None),
+        check_path=dict(required=False, type="bool", default=None),
+        crc_salt=dict(required=False, type="str", default=None),
+        disabled=dict(required=False, type="str", default=None),
+        followTail=dict(required=False, type="str", default=None),
+        host=dict(required=False, type="str", default=None),
+        host_segment=dict(required=False, type="int", default=None),
+        host_regex=dict(required=False, type="int", default=None),
+        ignore_older_than=dict(required=False, type="str", default=None),
+        index=dict(required=False, type="str", default=None),
+        recursive=dict(required=False, type="str", default=None),
+        rename_source=dict(required=False, type="str", default=None),
+        sourcetype=dict(required=False, type="str", default=None),
+        time_before_close=dict(required=False, type="int", default=None),
+        whitelist=dict(required=False, type="str", default=None),
     )
 
-    module = AnsibleModule(
-        argument_spec=argspec,
-        supports_check_mode=True
-    )
+    module = AnsibleModule(argument_spec=argspec, supports_check_mode=True)
 
     # map of keys for the splunk REST API that aren't pythonic so we have to
     # handle the substitutes
     keymap = {
-        'check_index': 'check-index',
-        'check_path': 'check-path',
-        'crc_salt': 'crc-salt',
-        'ignore_older_than': 'ignore-older-than',
-        'rename_source': 'rename-source',
-        'time_before_close': 'time-before-close'
-
+        "check_index": "check-index",
+        "check_path": "check-path",
+        "crc_salt": "crc-salt",
+        "ignore_older_than": "ignore-older-than",
+        "rename_source": "rename-source",
+        "time_before_close": "time-before-close",
     }
 
     splunk_request = SplunkRequest(
         module,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
         keymap=keymap,
-        not_rest_data_keys=['state']
+        not_rest_data_keys=["state"],
     )
     # This is where the splunk_* args are processed
     request_data = splunk_request.get_data()
 
-    query_dict = splunk_request.get_by_path('servicesNS/nobody/search/data/inputs/monitor/{0}'.format(quote_plus(module.params['name'])))
+    query_dict = splunk_request.get_by_path(
+        "servicesNS/nobody/search/data/inputs/monitor/{0}".format(
+            quote_plus(module.params["name"])
+        )
+    )
 
-    if module.params['state'] == 'present':
+    if module.params["state"] == "present":
         if query_dict:
             needs_change = False
             for arg in request_data:
-                if arg in query_dict['entry'][0]['content']:
-                    if to_text(query_dict['entry'][0]['content'][arg]) != to_text(request_data[arg]):
+                if arg in query_dict["entry"][0]["content"]:
+                    if to_text(query_dict["entry"][0]["content"][arg]) != to_text(
+                        request_data[arg]
+                    ):
                         needs_change = True
             if not needs_change:
-                module.exit_json(changed=False, msg="Nothing to do.", splunk_data=query_dict)
+                module.exit_json(
+                    changed=False, msg="Nothing to do.", splunk_data=query_dict
+                )
             if module.check_mode and needs_change:
-                module.exit_json(changed=True, msg="A change would have been made if not in check mode.", splunk_data=query_dict)
+                module.exit_json(
+                    changed=True,
+                    msg="A change would have been made if not in check mode.",
+                    splunk_data=query_dict,
+                )
             if needs_change:
                 splunk_data = splunk_request.create_update(
-                    'servicesNS/nobody/search/data/inputs/monitor/{0}'.format(
-                        quote_plus(module.params['name'])
+                    "servicesNS/nobody/search/data/inputs/monitor/{0}".format(
+                        quote_plus(module.params["name"])
                     )
                 )
-                module.exit_json(changed=True, msg="{0} updated.", splunk_data=splunk_data)
+                module.exit_json(
+                    changed=True, msg="{0} updated.", splunk_data=splunk_data
+                )
         else:
             # Create it
             _data = splunk_request.get_data()
-            _data['name'] = module.params['name']
-            splunk_data = splunk_request.create_update('servicesNS/nobody/search/data/inputs/monitor', data=urlencode(_data))
+            _data["name"] = module.params["name"]
+            splunk_data = splunk_request.create_update(
+                "servicesNS/nobody/search/data/inputs/monitor", data=urlencode(_data)
+            )
             module.exit_json(changed=True, msg="{0} created.", splunk_data=splunk_data)
 
-    if module.params['state'] == 'absent':
+    if module.params["state"] == "absent":
         if query_dict:
-            splunk_data = splunk_request.delete_by_path('servicesNS/nobody/search/data/inputs/monitor/{0}'.format(quote_plus(module.params['name'])))
-            module.exit_json(changed=True, msg="Deleted {0}.".format(module.params['name']), splunk_data=splunk_data)
+            splunk_data = splunk_request.delete_by_path(
+                "servicesNS/nobody/search/data/inputs/monitor/{0}".format(
+                    quote_plus(module.params["name"])
+                )
+            )
+            module.exit_json(
+                changed=True,
+                msg="Deleted {0}.".format(module.params["name"]),
+                splunk_data=splunk_data,
+            )
 
     module.exit_json(changed=False, msg="Nothing to do.", splunk_data=query_dict)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

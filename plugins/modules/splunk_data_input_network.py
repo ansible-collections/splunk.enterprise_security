@@ -5,15 +5,18 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: splunk_data_input_network
 short_description: Manage Splunk Data Inputs of type TCP or UDP
@@ -101,10 +104,10 @@ options:
       - Defaults to audittrail (if signedaudit=true) or fschange (if signedaudit=false).
 
 author: "Ansible Security Automation Team (https://github.com/ansible-security)
-'''
+"""
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule
@@ -113,103 +116,130 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import Request
 from ansible.module_utils.six.moves.urllib.parse import urlencode, quote_plus
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible_collections.splunk.enterprise_security.plugins.module_utils.splunk \
-    import SplunkRequest, parse_splunk_args
+from ansible_collections.splunk.enterprise_security.plugins.module_utils.splunk import (
+    SplunkRequest,
+    parse_splunk_args,
+)
 
 import copy
+
 
 def main():
 
     argspec = dict(
-        state=dict(required=False, choices=[ 'present', 'absent', 'enabled', 'disable' ], default='present', type='str'),
-        connection_host=dict(required=False, choices=['ip', 'dns', 'none'], default='none', type='str'),
-        host=dict(required=False, type='str', default=None),
-        index=dict(required=False, type='str', default=None),
-        name=dict(required=True, type='str'),
-        protocol=dict(required=True, type='str', choices=['tcp', 'udp']),
-        queue=dict(required=False, type='str', choices=['parsingQueue', 'indexQueue'], default='parsingQueue'),
-        rawTcpDoneTimeout=dict(required=False, type='int', default=10),
-        restrictToHost=dict(required=False, type='str', default=None),
-        ssl=dict(required=False, type='bool', default=None),
-        source=dict(required=False, type='str', default=None),
-        sourcetype=dict(required=False, type='str', default=None),
-        datatype=dict(required=False, choices=[ "cooked", "raw" ], default="raw")
+        state=dict(
+            required=False,
+            choices=["present", "absent", "enabled", "disable"],
+            default="present",
+            type="str",
+        ),
+        connection_host=dict(
+            required=False, choices=["ip", "dns", "none"], default="none", type="str"
+        ),
+        host=dict(required=False, type="str", default=None),
+        index=dict(required=False, type="str", default=None),
+        name=dict(required=True, type="str"),
+        protocol=dict(required=True, type="str", choices=["tcp", "udp"]),
+        queue=dict(
+            required=False,
+            type="str",
+            choices=["parsingQueue", "indexQueue"],
+            default="parsingQueue",
+        ),
+        rawTcpDoneTimeout=dict(required=False, type="int", default=10),
+        restrictToHost=dict(required=False, type="str", default=None),
+        ssl=dict(required=False, type="bool", default=None),
+        source=dict(required=False, type="str", default=None),
+        sourcetype=dict(required=False, type="str", default=None),
+        datatype=dict(required=False, choices=["cooked", "raw"], default="raw"),
     )
 
-    module = AnsibleModule(
-        argument_spec=argspec,
-        supports_check_mode=True
-    )
+    module = AnsibleModule(argument_spec=argspec, supports_check_mode=True)
 
     splunk_request = SplunkRequest(
         module,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
-        not_rest_data_keys = [ 'state', 'datatype', 'protocol' ]
+        not_rest_data_keys=["state", "datatype", "protocol"],
     )
     # This is where the splunk_* args are processed
     request_data = splunk_request.get_data()
 
     query_dict = splunk_request.get_by_path(
-        'servicesNS/nobody/search/data/inputs/{0}/{1}/{2}'.format(
-            quote_plus(module.params['protocol']),
-            quote_plus(module.params['datatype']),
-            quote_plus(module.params['name']),
+        "servicesNS/nobody/search/data/inputs/{0}/{1}/{2}".format(
+            quote_plus(module.params["protocol"]),
+            quote_plus(module.params["datatype"]),
+            quote_plus(module.params["name"]),
         )
     )
 
-    if module.params['state'] in ['present', 'enabled', 'disabled']:
+    if module.params["state"] in ["present", "enabled", "disabled"]:
         _data = splunk_request.get_data()
-        if module.params['state'] in ['present', 'enabled']:
-            _data['disabled'] = False
+        if module.params["state"] in ["present", "enabled"]:
+            _data["disabled"] = False
         else:
-            _data['disabled'] = True
+            _data["disabled"] = True
         if query_dict:
             needs_change = False
             for arg in request_data:
-                if arg in query_dict['entry'][0]['content']:
-                    if to_text(query_dict['entry'][0]['content'][arg]) != to_text(request_data[arg]):
+                if arg in query_dict["entry"][0]["content"]:
+                    if to_text(query_dict["entry"][0]["content"][arg]) != to_text(
+                        request_data[arg]
+                    ):
                         needs_change = True
             if not needs_change:
-                module.exit_json(changed=False, msg="Nothing to do.", splunk_data=query_dict)
+                module.exit_json(
+                    changed=False, msg="Nothing to do.", splunk_data=query_dict
+                )
             if module.check_mode and needs_change:
-                module.exit_json(changed=True, msg="A change would have been made if not in check mode.", splunk_data=query_dict)
+                module.exit_json(
+                    changed=True,
+                    msg="A change would have been made if not in check mode.",
+                    splunk_data=query_dict,
+                )
             if needs_change:
                 splunk_data = splunk_request.create_update(
-                    'servicesNS/nobody/search/data/inputs/{0}/{1}/{2}'.format(
-                        quote_plus(module.params['protocol']),
-                        quote_plus(module.params['datatype']),
-                        quote_plus(module.params['name']),
-                        data=urlencode(_data)
+                    "servicesNS/nobody/search/data/inputs/{0}/{1}/{2}".format(
+                        quote_plus(module.params["protocol"]),
+                        quote_plus(module.params["datatype"]),
+                        quote_plus(module.params["name"]),
+                        data=urlencode(_data),
                     )
                 )
-            if module.params['state'] in ['present', 'enabled']:
-                module.exit_json(changed=True, msg="{0} updated.", splunk_data=splunk_data)
+            if module.params["state"] in ["present", "enabled"]:
+                module.exit_json(
+                    changed=True, msg="{0} updated.", splunk_data=splunk_data
+                )
             else:
-                module.exit_json(changed=True, msg="{0} disabled.", splunk_data=splunk_data)
+                module.exit_json(
+                    changed=True, msg="{0} disabled.", splunk_data=splunk_data
+                )
         else:
             # Create it
             splunk_data = splunk_request.create_update(
-                'servicesNS/nobody/search/data/inputs/{0}/{1}'.format(
-                    quote_plus(module.params['protocol']),
-                    quote_plus(module.params['datatype']),
+                "servicesNS/nobody/search/data/inputs/{0}/{1}".format(
+                    quote_plus(module.params["protocol"]),
+                    quote_plus(module.params["datatype"]),
                 ),
-                data=urlencode(_data)
+                data=urlencode(_data),
             )
             module.exit_json(changed=True, msg="{0} created.", splunk_data=splunk_data)
-    elif module.params['state'] == 'absent':
+    elif module.params["state"] == "absent":
         if query_dict:
             splunk_data = splunk_request.delete_by_path(
-                'servicesNS/nobody/search/data/inputs/{0}/{1}/{2}'.format(
-                    quote_plus(module.params['protocol']),
-                    quote_plus(module.params['datatype']),
-                    quote_plus(module.params['name']),
+                "servicesNS/nobody/search/data/inputs/{0}/{1}/{2}".format(
+                    quote_plus(module.params["protocol"]),
+                    quote_plus(module.params["datatype"]),
+                    quote_plus(module.params["name"]),
                 )
             )
-            module.exit_json(changed=True, msg="Deleted {0}.".format(module.params['name']), splunk_data=splunk_data)
+            module.exit_json(
+                changed=True,
+                msg="Deleted {0}.".format(module.params["name"]),
+                splunk_data=splunk_data,
+            )
 
     module.exit_json(changed=False, msg="Nothing to do.", splunk_data={})
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-

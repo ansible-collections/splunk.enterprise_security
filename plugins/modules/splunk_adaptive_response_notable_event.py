@@ -5,15 +5,18 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: splunk_adaptive_response_notable_event
 short_description: Manage Splunk Enterprise Security Notable Event Adaptive Responses
@@ -145,11 +148,11 @@ options:
     required: False
 
 author: "Ansible Security Automation Team (https://github.com/ansible-security)
-'''
-#FIXME - adaptive response action association is probaby going to need to be a separate module we stitch together in a role
+"""
+# FIXME - adaptive response action association is probaby going to need to be a separate module we stitch together in a role
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
@@ -157,48 +160,82 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import Request
 from ansible.module_utils.six.moves.urllib.parse import urlencode, quote_plus
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible_collections.splunk.enterprise_security.plugins.module_utils.splunk \
-    import SplunkRequest, parse_splunk_args
+from ansible_collections.splunk.enterprise_security.plugins.module_utils.splunk import (
+    SplunkRequest,
+    parse_splunk_args,
+)
 
 import copy
 import json
 
+
 def main():
 
     argspec = dict(
-        name=dict(required=True, type='str'),
-        correlation_search_name=dict(required=True, type='str'),
-        description=dict(required=True, type='str'),
-        state=dict(choices=['present', 'absent'], required=True),
-        security_domain=dict(choices=['access', 'endpoint', 'network', 'threat', 'identity', 'audit'], required=False, default='threat'),
-        severity=dict(choices=['informational', 'low', 'medium', 'high', 'critical', 'unknown'], required=False, default='high'),
-        default_owner=dict(required=False, type='str'),
-        default_status=dict(choices=['unassigned', 'new', 'in progress', 'pending', 'resolved', 'closed', ''], required=False, default=''),
-        drill_down_name=dict(required=False, type='str'),
-        drill_down_search=dict(required=False, type='str'),
-        drill_down_earliest_offset=dict(required=False, type='str', default='$info_min_time$'),
-        drill_down_latest_offset=dict(required=False, type='str', default='$info_max_time$'),
-        investigation_profiles=dict(required=False, type='str'),
-        next_steps=dict(required=False, type='list', default=[]),
-        recommended_actions=dict(required=False, type='list', default=[]),
-        asset_extraction=dict(required=False, type='list', default=['src', 'dest', 'dvc', 'orig_host'], choices=['src', 'dest', 'dvc', 'orig_host']),
-        identity_extraction=dict(required=False, type='list', default=['user', 'src_user'], choices=['user', 'src_user']),
+        name=dict(required=True, type="str"),
+        correlation_search_name=dict(required=True, type="str"),
+        description=dict(required=True, type="str"),
+        state=dict(choices=["present", "absent"], required=True),
+        security_domain=dict(
+            choices=["access", "endpoint", "network", "threat", "identity", "audit"],
+            required=False,
+            default="threat",
+        ),
+        severity=dict(
+            choices=["informational", "low", "medium", "high", "critical", "unknown"],
+            required=False,
+            default="high",
+        ),
+        default_owner=dict(required=False, type="str"),
+        default_status=dict(
+            choices=[
+                "unassigned",
+                "new",
+                "in progress",
+                "pending",
+                "resolved",
+                "closed",
+                "",
+            ],
+            required=False,
+            default="",
+        ),
+        drill_down_name=dict(required=False, type="str"),
+        drill_down_search=dict(required=False, type="str"),
+        drill_down_earliest_offset=dict(
+            required=False, type="str", default="$info_min_time$"
+        ),
+        drill_down_latest_offset=dict(
+            required=False, type="str", default="$info_max_time$"
+        ),
+        investigation_profiles=dict(required=False, type="str"),
+        next_steps=dict(required=False, type="list", default=[]),
+        recommended_actions=dict(required=False, type="list", default=[]),
+        asset_extraction=dict(
+            required=False,
+            type="list",
+            default=["src", "dest", "dvc", "orig_host"],
+            choices=["src", "dest", "dvc", "orig_host"],
+        ),
+        identity_extraction=dict(
+            required=False,
+            type="list",
+            default=["user", "src_user"],
+            choices=["user", "src_user"],
+        ),
     )
 
-    module = AnsibleModule(
-        argument_spec=argspec,
-        supports_check_mode=True
-    )
+    module = AnsibleModule(argument_spec=argspec, supports_check_mode=True)
 
     splunk_request = SplunkRequest(
         module,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
-        not_rest_data_keys=['state']
+        not_rest_data_keys=["state"],
     )
 
     query_dict = splunk_request.get_by_path(
-        'servicesNS/nobody/SplunkEnterpriseSecuritySuite/saved/searches/{0}'.format(
-            quote_plus(module.params['correlation_search_name'])
+        "servicesNS/nobody/SplunkEnterpriseSecuritySuite/saved/searches/{0}".format(
+            quote_plus(module.params["correlation_search_name"])
         )
     )
 
@@ -206,16 +243,16 @@ def main():
     # endpoint in the rest api and we want to hide the nuance from the user
     request_post_data = {}
 
-    #FIXME  need to figure out how to properly support these, the possible values appear to
+    # FIXME  need to figure out how to properly support these, the possible values appear to
     #       be dynamically created based on what the search is indexing
-    #request_post_data['action.notable.param.extract_assets'] = '[\"src\",\"dest\",\"dvc\",\"orig_host\"]'
-    #request_post_data['action.notable.param.extract_identities'] = [\"src_user\",\"user\"]
-    if module.params['next_steps']:
-        if len(module.params['next_steps']) == 1:
-            next_steps = "[[action|{0}]]".format(module.params['next_steps'][0])
+    # request_post_data['action.notable.param.extract_assets'] = '[\"src\",\"dest\",\"dvc\",\"orig_host\"]'
+    # request_post_data['action.notable.param.extract_identities'] = [\"src_user\",\"user\"]
+    if module.params["next_steps"]:
+        if len(module.params["next_steps"]) == 1:
+            next_steps = "[[action|{0}]]".format(module.params["next_steps"][0])
         else:
             next_steps = ""
-            for next_step in module.params['next_steps']:
+            for next_step in module.params["next_steps"]:
                 if next_steps:
                     next_steps += "\n[[action|{0}]]".format(next_step)
                 else:
@@ -224,79 +261,135 @@ def main():
         # NOTE: version:1 appears to be hard coded when you create this via the splunk web UI
         #       but I don't know what it is/means because there's no docs on it
         next_steps_dict = {"version": 1, "data": next_steps}
-        request_post_data['action.notable.param.next_steps'] = json.dumps(next_steps_dict)
+        request_post_data["action.notable.param.next_steps"] = json.dumps(
+            next_steps_dict
+        )
 
-    if module.params['recommended_actions']:
-        if len(module.params['recommended_actions']) == 1:
-            request_post_data['action.notable.param.recommended_actions'] = module.params['recommended_actions'][0]
+    if module.params["recommended_actions"]:
+        if len(module.params["recommended_actions"]) == 1:
+            request_post_data[
+                "action.notable.param.recommended_actions"
+            ] = module.params["recommended_actions"][0]
         else:
-            request_post_data['action.notable.param.recommended_actions'] = ','.join(module.params['recommended_actions'])
+            request_post_data["action.notable.param.recommended_actions"] = ",".join(
+                module.params["recommended_actions"]
+            )
 
-    request_post_data['action.notable.param.rule_description'] = module.params['description']
-    request_post_data['action.notable.param.rule_title'] = module.params['name']
-    request_post_data['action.notable.param.security_domain'] = module.params['security_domain']
-    request_post_data['action.notable.param.severity'] =  module.params['severity']
-    request_post_data['action.notable.param.asset_extraction'] =  module.params['asset_extraction']
-    request_post_data['action.notable.param.identity_extraction'] =  module.params['identity_extraction']
+    request_post_data["action.notable.param.rule_description"] = module.params[
+        "description"
+    ]
+    request_post_data["action.notable.param.rule_title"] = module.params["name"]
+    request_post_data["action.notable.param.security_domain"] = module.params[
+        "security_domain"
+    ]
+    request_post_data["action.notable.param.severity"] = module.params["severity"]
+    request_post_data["action.notable.param.asset_extraction"] = module.params[
+        "asset_extraction"
+    ]
+    request_post_data["action.notable.param.identity_extraction"] = module.params[
+        "identity_extraction"
+    ]
 
     # NOTE: this field appears to be hard coded when you create this via the splunk web UI
     #       but I don't know what it is/means because there's no docs on it
-    request_post_data['action.notable.param.verbose'] = '0'
+    request_post_data["action.notable.param.verbose"] = "0"
 
-    if module.params['default_owner']:
-        request_post_data['action.notable.param.default_owner'] =  module.params['default_owner']
+    if module.params["default_owner"]:
+        request_post_data["action.notable.param.default_owner"] = module.params[
+            "default_owner"
+        ]
 
-    if module.params['default_status']:
-        request_post_data['action.notable.param.default_status'] =  module.params['default_status']
+    if module.params["default_status"]:
+        request_post_data["action.notable.param.default_status"] = module.params[
+            "default_status"
+        ]
 
     if query_dict:
-        request_post_data['search'] = query_dict['entry'][0]['content']['search']
-        if 'actions' in query_dict['entry'][0]['content']:
-            if query_dict['entry'][0]['content']['actions'] == "notable":
+        request_post_data["search"] = query_dict["entry"][0]["content"]["search"]
+        if "actions" in query_dict["entry"][0]["content"]:
+            if query_dict["entry"][0]["content"]["actions"] == "notable":
                 pass
-            elif len(query_dict['entry'][0]['content']['actions'].split(',')) > 0 and "notable" not in query_dict['entry'][0]['content']['actions']:
-                request_post_data['actions'] = query_dict['entry'][0]['content']['actions'] + ", notable"
+            elif (
+                len(query_dict["entry"][0]["content"]["actions"].split(",")) > 0
+                and "notable" not in query_dict["entry"][0]["content"]["actions"]
+            ):
+                request_post_data["actions"] = (
+                    query_dict["entry"][0]["content"]["actions"] + ", notable"
+                )
             else:
-                request_post_data['actions'] = "notable"
+                request_post_data["actions"] = "notable"
     else:
-        module.fail_json(msg="Unable to find correlation search: {0}", splunk_data=splunk_data)
+        module.fail_json(
+            msg="Unable to find correlation search: {0}", splunk_data=splunk_data
+        )
 
-    if module.params['state'] == 'present':
+    if module.params["state"] == "present":
         needs_change = False
         for arg in request_post_data:
-            if arg in query_dict['entry'][0]['content']:
-                if to_text(query_dict['entry'][0]['content'][arg]) != to_text(request_post_data[arg]):
+            if arg in query_dict["entry"][0]["content"]:
+                if to_text(query_dict["entry"][0]["content"][arg]) != to_text(
+                    request_post_data[arg]
+                ):
                     needs_change = True
         if not needs_change:
-            module.exit_json(changed=False, msg="Nothing to do.", splunk_data=query_dict)
+            module.exit_json(
+                changed=False, msg="Nothing to do.", splunk_data=query_dict
+            )
         if module.check_mode and needs_change:
-            module.exit_json(changed=True, msg="A change would have been made if not in check mode.", splunk_data=query_dict)
+            module.exit_json(
+                changed=True,
+                msg="A change would have been made if not in check mode.",
+                splunk_data=query_dict,
+            )
         if needs_change:
             splunk_data = splunk_request.create_update(
-                'servicesNS/nobody/SplunkEnterpriseSecuritySuite/saved/searches/{0}'.format(quote_plus(module.params['correlation_search_name'])),
-                    data=urlencode(request_post_data)
+                "servicesNS/nobody/SplunkEnterpriseSecuritySuite/saved/searches/{0}".format(
+                    quote_plus(module.params["correlation_search_name"])
+                ),
+                data=urlencode(request_post_data),
             )
-            module.exit_json(changed=True, msg="{0} updated.".format(module.params['correlation_search_name']), splunk_data=splunk_data)
+            module.exit_json(
+                changed=True,
+                msg="{0} updated.".format(module.params["correlation_search_name"]),
+                splunk_data=splunk_data,
+            )
 
-    if module.params['state'] == 'absent':
-        #FIXME - need to figure out how to clear the action.notable.param fields from the api endpoint
-        module.exit_json(changed=True, msg="Deleted {0}.".format(module.params['name']), splunk_data=splunk_data)
+    if module.params["state"] == "absent":
+        # FIXME - need to figure out how to clear the action.notable.param fields from the api endpoint
+        module.exit_json(
+            changed=True,
+            msg="Deleted {0}.".format(module.params["name"]),
+            splunk_data=splunk_data,
+        )
         for arg in request_post_data:
-            if arg in query_dict['entry'][0]['content']:
+            if arg in query_dict["entry"][0]["content"]:
                 needs_change = True
-                del query_dict['entry'][0]['content'][arg]
+                del query_dict["entry"][0]["content"][arg]
         if not needs_change:
-            module.exit_json(changed=False, msg="Nothing to do.", splunk_data=query_dict)
+            module.exit_json(
+                changed=False, msg="Nothing to do.", splunk_data=query_dict
+            )
         if module.check_mode and needs_change:
-            module.exit_json(changed=True, msg="A change would have been made if not in check mode.", splunk_data=query_dict)
+            module.exit_json(
+                changed=True,
+                msg="A change would have been made if not in check mode.",
+                splunk_data=query_dict,
+            )
         if needs_change:
             splunk_data = splunk_request.create_update(
-                'servicesNS/nobody/SplunkEnterpriseSecuritySuite/saved/searches/{0}'.format(quote_plus(module.params['correlation_search_name'])),
-                    data=urlencode(request_post_data)
+                "servicesNS/nobody/SplunkEnterpriseSecuritySuite/saved/searches/{0}".format(
+                    quote_plus(module.params["correlation_search_name"])
+                ),
+                data=urlencode(request_post_data),
             )
-            module.exit_json(changed=True, msg="{0} updated.".format(module.params['correlation_search_name']), splunk_data=splunk_data)
+            module.exit_json(
+                changed=True,
+                msg="{0} updated.".format(module.params["correlation_search_name"]),
+                splunk_data=splunk_data,
+            )
 
     module.exit_json(changed=False, msg="Nothing to do.", splunk_data=query_dict)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

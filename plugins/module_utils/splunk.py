@@ -13,6 +13,7 @@ from ansible.module_utils._text import to_text
 
 import json
 
+
 def parse_splunk_args(module):
     """
     Get the valid fields that should be passed to the REST API as urlencoded
@@ -25,13 +26,20 @@ def parse_splunk_args(module):
     try:
         splunk_data = {}
         for argspec in module.argument_spec:
-            if "default" in module.argument_spec[argspec] \
-                    and module.argument_spec[argspec]["default"] is None \
-                    and module.params[argspec] is not None:
+            if (
+                "default" in module.argument_spec[argspec]
+                and module.argument_spec[argspec]["default"] is None
+                and module.params[argspec] is not None
+            ):
                 splunk_data[argspec] = module.params[argspec]
         return splunk_data
     except TypeError as e:
-        module.fail_json(msg="Invalid data type provided for splunk module_util.parse_splunk_args: {0}".format(e))
+        module.fail_json(
+            msg="Invalid data type provided for splunk module_util.parse_splunk_args: {0}".format(
+                e
+            )
+        )
+
 
 class SplunkRequest(object):
     def __init__(self, module, headers=None, keymap={}, not_rest_data_keys=[]):
@@ -47,7 +55,7 @@ class SplunkRequest(object):
         # This allows us to exclude specific argspec keys from being included by
         # the rest data that don't follow the splunk_* naming convention
         self.not_rest_data_keys = not_rest_data_keys
-        self.not_rest_data_keys.append('validate_certs')
+        self.not_rest_data_keys.append("validate_certs")
 
     def _httpapi_error_handle(self, method, uri, payload=None):
 
@@ -61,27 +69,31 @@ class SplunkRequest(object):
             self.module.fail_json(msg="certificate not found: {0}".format(e))
 
         if code == 404:
-            if to_text(u'Object not found') in to_text(response) \
-                    or to_text(u'Could not find object') in to_text(response):
+            if to_text(u"Object not found") in to_text(response) or to_text(
+                u"Could not find object"
+            ) in to_text(response):
                 return {}
 
         if not (code >= 200 and code < 300):
-            self.module.fail_json(msg='Splunk httpapi returned error {0} with message {1}'.format(code, response))
+            self.module.fail_json(
+                msg="Splunk httpapi returned error {0} with message {1}".format(
+                    code, response
+                )
+            )
 
         return response
 
     def get(self, url, **kwargs):
-        return self._httpapi_error_handle('GET', url, **kwargs)
+        return self._httpapi_error_handle("GET", url, **kwargs)
 
     def put(self, url, **kwargs):
-        return self._httpapi_error_handle('PUT', url, **kwargs)
+        return self._httpapi_error_handle("PUT", url, **kwargs)
 
     def post(self, url, **kwargs):
-        return self._httpapi_error_handle('POST', url, **kwargs)
+        return self._httpapi_error_handle("POST", url, **kwargs)
 
     def delete(self, url, **kwargs):
-        return self._httpapi_error_handle('DELETE', url, **kwargs)
-
+        return self._httpapi_error_handle("DELETE", url, **kwargs)
 
     def get_data(self):
         """
@@ -94,13 +106,14 @@ class SplunkRequest(object):
         try:
             splunk_data = {}
             for param in self.module.params:
-                if (self.module.params[param]) != None and (param not in self.not_rest_data_keys):
+                if (self.module.params[param]) != None and (
+                    param not in self.not_rest_data_keys
+                ):
                     if param in self.keymap:
                         splunk_data[self.keymap[param]] = self.module.params[param]
                     else:
                         splunk_data[param] = self.module.params[param]
             return splunk_data
-
 
         except TypeError as e:
             self.module.fail_json(msg="invalid data type provided: {0}".format(e))
@@ -129,5 +142,3 @@ class SplunkRequest(object):
         if data == None:
             data = self.get_urlencoded_data()
         return self.post("/{0}?output_mode=json".format(rest_path), payload=data)
-
-

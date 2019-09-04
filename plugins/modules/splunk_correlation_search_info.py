@@ -5,15 +5,18 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: splunk_correlation_search_info
 short_description: Manage Splunk Enterprise Security Correlation Searches
@@ -28,11 +31,11 @@ options:
     type: str
 
 author: "Ansible Security Automation Team (https://github.com/ansible-security)
-'''
-#FIXME - adaptive response action association is probaby going to need to be a separate module we stitch together in a role
+"""
+# FIXME - adaptive response action association is probaby going to need to be a separate module we stitch together in a role
 
-EXAMPLES = '''
-'''
+EXAMPLES = """
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_text
@@ -40,41 +43,36 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import Request
 from ansible.module_utils.six.moves.urllib.parse import urlencode, quote_plus
 from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible_collections.splunk.enterprise_security.plugins.module_utils.splunk import SplunkRequest
+from ansible_collections.splunk.enterprise_security.plugins.module_utils.splunk import (
+    SplunkRequest,
+)
+
 
 def main():
 
-    argspec = dict(
-        name=dict(required=False, type='str'),
-    )
+    argspec = dict(name=dict(required=False, type="str"))
 
-    module = AnsibleModule(
-        argument_spec=argspec,
-        supports_check_mode=True
-    )
+    module = AnsibleModule(argument_spec=argspec, supports_check_mode=True)
 
-    splunk_request = SplunkRequest(
-        module,
-        headers={"Content-Type": "application/json"},
-    )
+    splunk_request = SplunkRequest(module, headers={"Content-Type": "application/json"})
 
-    if module.params['name']:
+    if module.params["name"]:
         try:
             query_dict = splunk_request.get_by_path(
-                'servicesNS/nobody/SplunkEnterpriseSecuritySuite/saved/searches/{0}'.format(
-                    quote_plus(module.params['name'])
+                "servicesNS/nobody/SplunkEnterpriseSecuritySuite/saved/searches/{0}".format(
+                    quote_plus(module.params["name"])
                 )
             )
         except HTTPError as e:
             # the data monitor doesn't exist
             query_dict = {}
     else:
-            query_dict = splunk_request.get_by_path(
-                'servicesNS/nobody/SplunkEnterpriseSecuritySuite/saved/searches'
-            )
-
+        query_dict = splunk_request.get_by_path(
+            "servicesNS/nobody/SplunkEnterpriseSecuritySuite/saved/searches"
+        )
 
     module.exit_json(changed=False, splunk_correlation_search_info=query_dict)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
