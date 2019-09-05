@@ -105,3 +105,6 @@ venv.bak/
 
 # mazer / ansible collections
 releases/
+
+# ansible-galaxy collection build
+*.tar.gz
