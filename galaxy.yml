@@ -31,3 +31,5 @@ documentation: 'https://github.com/ansible-security/splunk_enterprise_security'
 homepage: 'https://github.com/ansible-security/splunk_enterprise_security'
 # issue tracker url
 issues: 'https://github.com/ansible-security/splunk_enterprise_security/issues'
+
+readme: README.md
