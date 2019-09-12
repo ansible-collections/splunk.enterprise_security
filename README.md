@@ -1,6 +1,6 @@
 # Splunk Enterprise Security Ansible Collection
 
-## NOTE: THIS COLLECTION IS UNDER ACTIVE DEVELOPMENT AND SHOULD NOT BE CONSIDERED STABLE AT THIS TIME
+## Tech Preview
 
 Using splunk modules are meant to be used with the [`httpapi` connection
 plugin](https://docs.ansible.com/ansible/latest/plugins/connection/httpapi.html)
