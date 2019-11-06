@@ -237,7 +237,7 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argspec, supports_check_mode=True)
-    if module["state"] in ["present", "enabled"]:
+    if module.params["state"] in ["present", "enabled"]:
         module_disabled_state = False
     else:
         module_disabled_state = True
