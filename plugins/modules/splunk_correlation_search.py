@@ -27,18 +27,19 @@ options:
   name:
     description:
       - Name of coorelation search
-    required: true
+    required: True
     type: str
   description:
     description:
       - Description of the coorelation search, this will populate the description field for the web console
-    required: true
+    required: True
     type: str
   state:
     description:
       - Add, remove, enable, or disiable a correlation search.
-    required: true
+    required: True
     choices: [ "present", "absent", "enabled", "disabled" ]
+    type: str
   search:
     description:
       - SPL search string
@@ -80,7 +81,9 @@ options:
   scheduling:
     description:
       - Controls the way the scheduler computes the next execution time of a scheduled search.
-      - Learn more: https://docs.splunk.com/Documentation/Splunk/7.2.3/Report/Configurethepriorityofscheduledreports#Real-time_scheduling_and_continuous_scheduling
+      - >
+        Learn more:
+        https://docs.splunk.com/Documentation/Splunk/7.2.3/Report/Configurethepriorityofscheduledreports#Real-time_scheduling_and_continuous_scheduling
     type: str
     required: False
     default: "real-time"
@@ -155,12 +158,12 @@ options:
     type: bool
     required: False
     default: False
+notes:
+  - >
+    The following options are not yet supported:
+    throttle_window_duration, throttle_fields_to_group_by, and adaptive_response_actions
 
-NOTES:
-  - The following options are not yet supported: throttle_window_duration, throttle_fields_to_group_by, and adaptive_response_actions
-
-
-author: "Ansible Security Automation Team (https://github.com/ansible-security)
+author: Ansible Security Automation Team (@maxamillion) <https://github.com/ansible-security>
 """
 # FIXME - adaptive response action association is probaby going to need to be a separate module we stitch together in a role
 
@@ -233,7 +236,7 @@ def main():
         trigger_alert_when_value=dict(type="str", required=False, default="10"),
         throttle_window_duration=dict(type="str", required=False),
         throttle_fields_to_group_by=dict(type="str", required=False),
-        suppress_alert=dict(type=bool, required=False, default=False),
+        suppress_alerts=dict(type="bool", required=False, default=False),
     )
 
     module = AnsibleModule(argument_spec=argspec, supports_check_mode=True)
@@ -286,7 +289,7 @@ def main():
         "trigger_alert_when_condition"
     ]
     request_post_data["alert_threshold"] = module.params["trigger_alert_when_value"]
-    request_post_data["alert.suppress"] = module.params["suppress_alert"]
+    request_post_data["alert.suppress"] = module.params["suppress_alerts"]
     request_post_data["disabled"] = module_disabled_state
 
     if module.params["state"] in ["present", "enabled", "disabled"]:

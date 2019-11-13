@@ -27,40 +27,59 @@ options:
   protocol:
     description:
       - Choose between tcp or udp
-    required: true
-    choices: ['tcp', 'udp']
-  connection_host
+    required: True
+    choices:
+      - 'tcp'
+      - 'udp'
+    type: str
+  connection_host:
     description:
       - Set the host for the remote server that is sending data.
-      - dns Valid values: (ip | dns | none)
-      - ip sets the host to the IP address of the remote server sending data.
-      - dns sets the host to the reverse DNS entry for the IP address of the remote server sending data.
-      - none leaves the host as specified in inputs.conf, which is typically the Splunk system hostname.
+      - C(ip) sets the host to the IP address of the remote server sending data.
+      - C(dns) sets the host to the reverse DNS entry for the IP address of the remote server sending data.
+      - C(none) leaves the host as specified in inputs.conf, which is typically the Splunk system hostname.
     default: "ip"
-    required: false
+    required: False
+    type: str
+    choices:
+      - "ip"
+      - "dns"
+      - "none"
   state:
     description:
       - Enable, disable, create, or destroy
-    choices: [ "present", "absent", "enabled", "disable" ]
-    required: false
+    choices:
+      - "present"
+      - "absent"
+      - "enabled"
+      - "disable"
+    required: False
     default: "present"
+    type: str
   datatype:
-    description:
-      - Forwarders can transmit three types of data: raw, unparsed, or parsed. "Cooked" data refers to parsed and unparsed formats.
-    choices: [ "cooked", "raw" ]
+    description: >
+      Forwarders can transmit three types of data: raw, unparsed, or parsed.
+      C(cooked) data refers to parsed and unparsed formats.
+    choices:
+      - "cooked"
+      - "raw"
     default: "raw"
-    required: false
+    required: False
+    type: str
   host:
     description:
       - Host from which the indexer gets data.
-    required: false
+    required: False
+    type: str
   index:
     description:
       - default Index to store generated events.
+    type: str
   name:
     description:
       - The input port which receives raw data.
-    required: true
+    required: True
+    type: str
   queue:
     description:
       - Specifies where the input processor should deposit the events it reads. Defaults to parsingQueue.
@@ -68,8 +87,12 @@ options:
         information about props.conf and rules for timestamping and linebreaking, refer to props.conf and
         the online documentation at "Monitor files and directories with inputs.conf"
       - Set queue to indexQueue to send your data directly into the index.
-    choices: [ "parsingQueue", "indexQueue" ]
-    required: false
+    choices:
+      - "parsingQueue"
+      - "indexQueue"
+    type: str
+    required: False
+    default: "parsingQueue"
   rawTcpDoneTimeout:
     description:
       - Specifies in seconds the timeout value for adding a Done-key.
@@ -77,33 +100,38 @@ options:
         number of seconds, it adds a Done-key. This implies the last event is completely received.
     default: 10
     type: int
-    required: false
+    required: False
   restrictToHost:
     description:
       - Allows for restricting this input to only accept data from the host specified here.
-    required: false
+    required: False
+    type: str
   ssl:
     description:
       - Enable or disble ssl for the data stream
-    required: false
+    required: False
     type: bool
   source:
     description:
       - Sets the source key/field for events from this input. Defaults to the input file path.
-      - Sets the source key initial value. The key is used during parsing/indexing, in particular to set
+      - >
+        Sets the source key initial value. The key is used during parsing/indexing, in particular to set
         the source field during indexing. It is also the source field used at search time. As a convenience,
         the chosen string is prepended with 'source::'.
-      - Note: Overriding the source key is generally not recommended. Typically, the input layer provides a
+      - >
+        Note: Overriding the source key is generally not recommended. Typically, the input layer provides a
         more accurate string to aid in problem analysis and investigation, accurately recording the file from
         which the data was retrieved. Consider use of source types, tagging, and search wildcards before
         overriding this value.
+    type: str
   sourcetype:
     description:
       - Set the source type for events from this input.
-      - "sourcetype=" is automatically prepended to <string>.
-      - Defaults to audittrail (if signedaudit=true) or fschange (if signedaudit=false).
+      - '"sourcetype=" is automatically prepended to <string>.'
+      - Defaults to audittrail (if signedaudit=True) or fschange (if signedaudit=False).
+    type: str
 
-author: "Ansible Security Automation Team (https://github.com/ansible-security)
+author: Ansible Security Automation Team (@maxamillion) <https://github.com/ansible-security>
 """
 
 EXAMPLES = """
@@ -134,7 +162,7 @@ def main():
             type="str",
         ),
         connection_host=dict(
-            required=False, choices=["ip", "dns", "none"], default="none", type="str"
+            required=False, choices=["ip", "dns", "none"], default="ip", type="str"
         ),
         host=dict(required=False, type="str", default=None),
         index=dict(required=False, type="str", default=None),

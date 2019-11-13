@@ -21,7 +21,9 @@ DOCUMENTATION = """
 module: splunk_adaptive_response_notable_event
 short_description: Manage Splunk Enterprise Security Notable Event Adaptive Responses
 description:
-  - This module allows for creation, deletion, and modification of Splunk Enterprise Security Notable Event Adaptive Responses that are associated with a correlation search
+  - This module allows for creation, deletion, and modification of Splunk
+    Enterprise Security Notable Event Adaptive Responses that are associated
+    with a correlation search
 version_added: "2.8"
 options:
   name:
@@ -44,6 +46,7 @@ options:
       - Add or remove a data source.
     required: true
     choices: [ "present", "absent" ]
+    type: str
   security_domain:
     description:
       - Splunk Security Domain
@@ -99,16 +102,20 @@ options:
     required: False
   drill_down_earliest_offset:
     description:
-      - 'Set the amount of time before the triggering event to search for related events. For example, 2h. Use "$info_min_time$" to set the drill-down time to match the earliest time of the search'
+      - Set the amount of time before the triggering event to search for related
+        events. For example, 2h. Use \"$info_min_time$\" to set the drill-down time
+        to match the earliest time of the search
     type: str
     required: False
-    default: "$info_min_time$"
+    default: \"$info_min_time$\"
   drill_down_latest_offset:
     description:
-      - 'Set the amount of time after the triggering event to search for related events. For example, 1m. Use "$info_max_time$" to set the drill-down time to match the latest time of the search
+      - Set the amount of time after the triggering event to search for related
+        events. For example, 1m. Use \"$info_max_time$\" to set the drill-down
+        time to match the latest time of the search
     type: str
     required: False
-    default: "$info_max_time$"
+    default: \"$info_max_time$\"
   investigation_profiles:
     description:
       - Investigation profile to assiciate the notable event with.
@@ -123,7 +130,9 @@ options:
   recommended_actions:
     description:
       - List of adaptive responses that are recommended to be run next
-      - Identifying Recommended Adaptive Responses will highlight those actions for the analyst when looking at the list of response actions available, making it easier to find them among the longer list of available actions.
+      - Identifying Recommended Adaptive Responses will highlight those actions
+        for the analyst when looking at the list of response actions available,
+        making it easier to find them among the longer list of available actions.
     type: list
     required: False
   asset_extraction:
@@ -136,6 +145,11 @@ options:
       - dest
       - dvc
       - orig_host
+    default:
+      - src
+      - dest
+      - dvc
+      - orig_host
     required: False
   identity_extraction:
     description:
@@ -143,11 +157,14 @@ options:
       - defaults to all available choices
     type: list
     choices:
-      - src_user
       - user
+      - src_user
+    default:
+      - user
+      - src_user
     required: False
 
-author: "Ansible Security Automation Team (https://github.com/ansible-security)
+author: Ansible Security Automation Team (@maxamillion) <https://github.com/ansible-security>
 """
 # FIXME - adaptive response action association is probaby going to need to be a separate module we stitch together in a role
 
@@ -195,7 +212,6 @@ def main():
                 "pending",
                 "resolved",
                 "closed",
-                "",
             ],
             required=False,
             default="",
@@ -203,10 +219,10 @@ def main():
         drill_down_name=dict(required=False, type="str"),
         drill_down_search=dict(required=False, type="str"),
         drill_down_earliest_offset=dict(
-            required=False, type="str", default="$info_min_time$"
+            required=False, type="str", default='$info_min_time$'
         ),
         drill_down_latest_offset=dict(
-            required=False, type="str", default="$info_max_time$"
+            required=False, type="str", default='$info_max_time$'
         ),
         investigation_profiles=dict(required=False, type="str"),
         next_steps=dict(required=False, type="list", default=[]),

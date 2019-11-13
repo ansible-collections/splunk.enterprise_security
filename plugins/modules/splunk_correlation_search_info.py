@@ -30,7 +30,7 @@ options:
     required: false
     type: str
 
-author: "Ansible Security Automation Team (https://github.com/ansible-security)
+author: Ansible Security Automation Team (@maxamillion) <https://github.com/ansible-security>
 """
 # FIXME - adaptive response action association is probaby going to need to be a separate module we stitch together in a role
 
