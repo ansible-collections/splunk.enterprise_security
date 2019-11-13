@@ -1,8 +1,11 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2018, Adam Miller (admiller@redhat.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+
+__metaclass__ = type
 
 from ansible.module_utils.urls import CertificateError
 from ansible.module_utils.six.moves.urllib.parse import urlencode, quote_plus
@@ -42,7 +45,7 @@ def parse_splunk_args(module):
 
 
 class SplunkRequest(object):
-    def __init__(self, module, headers=None, keymap={}, not_rest_data_keys=[]):
+    def __init__(self, module, headers=None, keymap=None, not_rest_data_keys=None):
 
         self.module = module
         self.connection = Connection(self.module._socket_path)
@@ -50,11 +53,17 @@ class SplunkRequest(object):
         # The Splunk REST API endpoints often use keys that aren't pythonic so
         # we need to handle that with a mapping to allow keys to be proper
         # variables in the module argspec
-        self.keymap = keymap
+        if keymap is None:
+            self.keymap = {}
+        else:
+            self.keymap = keymap
 
         # This allows us to exclude specific argspec keys from being included by
         # the rest data that don't follow the splunk_* naming convention
-        self.not_rest_data_keys = not_rest_data_keys
+        if not_rest_data_keys is None:
+            self.not_rest_data_keys = []
+        else:
+            self.not_rest_data_keys = not_rest_data_keys
         self.not_rest_data_keys.append("validate_certs")
 
     def _httpapi_error_handle(self, method, uri, payload=None):
@@ -106,7 +115,7 @@ class SplunkRequest(object):
         try:
             splunk_data = {}
             for param in self.module.params:
-                if (self.module.params[param]) != None and (
+                if (self.module.params[param]) is not None and (
                     param not in self.not_rest_data_keys
                 ):
                     if param in self.keymap:
@@ -139,6 +148,6 @@ class SplunkRequest(object):
         """
         Create or Update a file/directory monitor data input in Splunk
         """
-        if data == None:
+        if data is not None:
             data = self.get_urlencoded_data()
         return self.post("/{0}?output_mode=json".format(rest_path), payload=data)

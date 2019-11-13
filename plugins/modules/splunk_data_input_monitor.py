@@ -27,92 +27,111 @@ options:
   name:
     description:
      - The file or directory path to monitor on the system.
-    required: true
+    required: True
     type: str
   state:
     description:
       - Add or remove a data source.
-    required: true
-    choices: [ "present", "absent" ]
+    required: True
+    choices:
+      - "present"
+      - "absent"
+    type: str
   blacklist:
     description:
       - Specify a regular expression for a file path. The file path that matches this regular expression is not indexed.
-    required: false
+    required: False
     type: str
   check_index:
     description:
-      - If set to C(true), the index value is checked to ensure that it is the name of a valid index.
-    required: false
+      - If set to C(True), the index value is checked to ensure that it is the name of a valid index.
+    required: False
     type: bool
+    default: False
   check_path:
     description:
-      - If set to C(true), the name value is checked to ensure that it exists.
-    required: false
+      - If set to C(True), the name value is checked to ensure that it exists.
+    required: False
     type: bool
   crc_salt:
     description:
-      - A string that modifies the file tracking identity for files in this input. The magic value <SOURCE> invokes special behavior (see admin documentation).
-    required: false
+      - A string that modifies the file tracking identity for files in this input.
+        The magic value <SOURCE> invokes special behavior (see admin documentation).
+    required: False
     type: str
   disabled:
     description:
       - Indicates if input monitoring is disabled.
-    required: false
+    required: False
+    default: False
     type: bool
   followTail:
     description:
-      - If set to C(true), files that are seen for the first time is read from the end.
-    required: false
+      - If set to C(True), files that are seen for the first time is read from the end.
+    required: False
     type: bool
+    default: False
   host:
     description:
       - The value to populate in the host field for events from this data input.
-    required: false
+    required: False
     type: str
   host_regex:
     description:
-      - Specify a regular expression for a file path. If the path for a file matches this regular expression, the captured value is used to populate the host field for events from this data input. The regular expression must have one capture group.
-    required: false
+      - Specify a regular expression for a file path. If the path for a file
+        matches this regular expression, the captured value is used to populate
+        the host field for events from this data input. The regular expression
+        must have one capture group.
+    required: False
     type: str
   host_segment:
     description:
       - Use the specified slash-separate segment of the filepath as the host field value.
-    required: false
+    required: False
     type: int
   ignore_older_than:
     description:
-      - Specify a time value. If the modification time of a file being monitored falls outside of this rolling time window, the file is no longer being monitored.
-    required: false
+      - Specify a time value. If the modification time of a file being monitored
+        falls outside of this rolling time window, the file is no longer being monitored.
+    required: False
     type: str
   index:
     description:
       - Which index events from this input should be stored in. Defaults to default.
-    required: false
+    required: False
     type: str
   recursive:
     description:
-      - Setting this to false prevents monitoring of any subdirectories encountered within this data input.
-    required: false
+      - Setting this to False prevents monitoring of any subdirectories encountered within this data input.
+    required: False
     type: bool
+    default: False
   rename_source:
     description:
-      - The value to populate in the source field for events from this data input. The same source should not be used for multiple data inputs.
-    required: false
+      - The value to populate in the source field for events from this data input.
+        The same source should not be used for multiple data inputs.
+    required: False
     type: str
   sourcetype:
+    description:
       - The value to populate in the sourcetype field for incoming events.
-    required: false
+    required: False
     type: str
   time_before_close:
-      - When Splunk software reaches the end of a file that is being read, the file is kept open for a minimum of the number of seconds specified in this value. After this period has elapsed, the file is checked again for more data.
-    required: false
+    description:
+      - When Splunk software reaches the end of a file that is being read, the
+        file is kept open for a minimum of the number of seconds specified in
+        this value. After this period has elapsed, the file is checked again for
+        more data.
+    required: False
     type: int
   whitelist:
+    description:
       - Specify a regular expression for a file path. Only file paths that match this regular expression are indexed.
-    required: false
+    required: False
     type: str
 
-author: "Ansible Security Automation Team (https://github.com/ansible-security)
+author: Ansible Security Automation Team (@maxamillion) <https://github.com/ansible-security>
 """
 
 EXAMPLES = """
@@ -138,17 +157,17 @@ def main():
         name=dict(required=True, type="str"),
         state=dict(choices=["present", "absent"], required=True),
         blacklist=dict(required=False, type="str", default=None),
-        check_indexed=dict(required=False, type="bool", default=None),
+        check_index=dict(required=False, type="bool", default=False),
         check_path=dict(required=False, type="bool", default=None),
         crc_salt=dict(required=False, type="str", default=None),
-        disabled=dict(required=False, type="str", default=None),
-        followTail=dict(required=False, type="str", default=None),
+        disabled=dict(required=False, type="bool", default=False),
+        followTail=dict(required=False, type="bool", default=False),
         host=dict(required=False, type="str", default=None),
         host_segment=dict(required=False, type="int", default=None),
-        host_regex=dict(required=False, type="int", default=None),
+        host_regex=dict(required=False, type="str", default=None),
         ignore_older_than=dict(required=False, type="str", default=None),
         index=dict(required=False, type="str", default=None),
-        recursive=dict(required=False, type="str", default=None),
+        recursive=dict(required=False, type="bool", default=False),
         rename_source=dict(required=False, type="str", default=None),
         sourcetype=dict(required=False, type="str", default=None),
         time_before_close=dict(required=False, type="int", default=None),

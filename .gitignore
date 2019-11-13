@@ -108,3 +108,5 @@ releases/
 
 # ansible-galaxy collection build
 *.tar.gz
+
+tests/output/
