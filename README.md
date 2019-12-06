@@ -59,7 +59,7 @@ An example for using this collection to manage a log source with [Splunk Enterpr
 [splunk]
 splunk.example.com
 
-[qradar:vars]
+[splunk:vars]
 ansible_network_os=splunk.enterprise_security.splunk
 ansible_user=admin
 ansible_httpapi_pass=my_super_secret_admin_password
